@@ -13,6 +13,7 @@ import (
 )
 
 func visit(path string, file os.FileInfo, err error) error {
+
 	if file.IsDir() {
 		return nil
 	}
@@ -25,41 +26,37 @@ func visit(path string, file os.FileInfo, err error) error {
 	}
 	defer fi.Close()
 
-	img, str, err := image.Decode(fi)
-	if err != nil {
-		return err
-	}
-
-	imgBounds := img.Bounds().Size()
-	err = makeImgDir(imgBounds.X, imgBounds.Y, path)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("string: %s, error: %s\n", str, err)
-	fmt.Printf("Image metrics W: %d H: %d\n", imgBounds.X, imgBounds.Y)
+	err = imageHandle(fi)
 
 	return nil
 }
 
-func makeImgDir(w int, h int, filePath string) error {
+func imageHandle(imgFile *os.File) error {
 
+	//open the image for processing
+	img, _, err := image.Decode(imgFile)
+	if err != nil {
+		return err
+	}
+
+	// for image resolution
+	imgBound := img.Bounds().Size()
 	// directory named by image resolution (ir)
-	irDir := fmt.Sprintf("%dx%d/", w, h)
-
+	irDir := fmt.Sprintf("%dx%d/", imgBound.X, imgBound.Y)
 	// full path to dir image will be moved to
 	fullPath := os.Getenv("HOME") + "/Pictures/" + irDir
 
 	// create the dir for the image
-	err := os.MkdirAll(fullPath, 0777)
+	err = os.MkdirAll(fullPath, 0777)
 	if err != nil {
 		return err
 	}
 
 	// seperate image name from path
-	_, imageName := path.Split(filePath)
+	_, imageName := path.Split(imgFile.Name())
 
 	// move image into new dir
-	err = os.Rename(filePath, fullPath+imageName)
+	err = os.Rename(imgFile.Name(), fullPath+imageName)
 	if err != nil {
 		fmt.Println(err)
 		return err

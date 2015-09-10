@@ -1,14 +1,13 @@
 package main
 
 import (
-	"archive/zip"
 	"flag"
 	"fmt"
+	"github.com/pierrre/archivefile/zip"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -45,28 +44,12 @@ func visit(filePath string, file os.FileInfo, err error) error {
 
 func zipHandle(filePath string) error {
 
-	// open a zip archive for reading
-	r, err := zip.OpenReader(filePath)
+	destPath := os.Getenv("HOME") + "/Downloads/"
+	err := zip.UnarchiveFile(filePath, destPath, nil)
 	if err != nil {
 		return err
 	}
-	defer r.Close()
-
-	// iterate through the file in the archive
-	for _, f := range r.File {
-		fmt.Printf("Contents of %s:\n", f.Name)
-		rc, err := f.Open()
-		if err != nil {
-			return err
-		}
-		_, err = io.CopyN(os.Stdout, rc, 68)
-		if err != nil {
-			return err
-		}
-		rc.Close()
-		fmt.Println()
-	}
-
+	err = os.Remove(filePath)
 	return nil
 }
 
